@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
 const { authenticate, authorize } = require('../middleware/auth');
+const email = require('../services/email');
 
 router.use(authenticate);
 
@@ -139,6 +140,19 @@ router.post('/', authorize('operador', 'autorizador', 'administrador'), async (r
     );
 
     await db.runAsync('COMMIT');
+
+    // Notificar por email (no bloquea la respuesta)
+    try {
+      const solicitante = await db.getAsync('SELECT id, nombre, email FROM users WHERE id = ?', [req.user.id]);
+      const trabajador = await db.getAsync('SELECT id, nombre, email FROM users WHERE id = ?', [trabajador_id]);
+      const autorizadores = await db.allAsync(
+        "SELECT nombre, email FROM users WHERE rol IN ('autorizador', 'administrador') AND activo = 1"
+      );
+      await email.solicitudEnviada(solicitante, trabajador, solicitudId, autorizadores);
+    } catch (emailErr) {
+      console.error('[Solicitudes] email error:', emailErr.message);
+    }
+
     res.status(201).json({ id: solicitudId, message: 'Solicitud creada correctamente' });
   } catch (err) {
     await db.runAsync('ROLLBACK');
@@ -176,6 +190,15 @@ router.post('/:id/aprobar', authorize('autorizador', 'administrador'), async (re
     } catch (txErr) {
       await db.runAsync('ROLLBACK');
       throw txErr;
+    }
+
+    // Notificar por email
+    try {
+      const solicitante = await db.getAsync('SELECT nombre, email FROM users WHERE id = ?', [solicitud.solicitante_id]);
+      const trabajador = await db.getAsync('SELECT nombre, email FROM users WHERE id = ?', [solicitud.trabajador_id]);
+      await email.solicitudAprobada(solicitante, trabajador, req.params.id);
+    } catch (emailErr) {
+      console.error('[Solicitudes/aprobar] email error:', emailErr.message);
     }
 
     res.json({ message: 'Solicitud aprobada' });
@@ -216,6 +239,14 @@ router.post('/:id/rechazar', authorize('autorizador', 'administrador'), async (r
     } catch (txErr) {
       await db.runAsync('ROLLBACK');
       throw txErr;
+    }
+
+    // Notificar por email
+    try {
+      const solicitante = await db.getAsync('SELECT nombre, email FROM users WHERE id = ?', [solicitud.solicitante_id]);
+      await email.solicitudRechazada(solicitante, req.params.id, comentario);
+    } catch (emailErr) {
+      console.error('[Solicitudes/rechazar] email error:', emailErr.message);
     }
 
     res.json({ message: 'Solicitud rechazada' });

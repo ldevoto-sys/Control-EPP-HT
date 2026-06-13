@@ -3,27 +3,14 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { db } = require('../db');
 const { authenticate } = require('../middleware/auth');
+const email = require('../services/email');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'eppHT_dev_secret';
-const APP_URL = process.env.APP_URL || 'http://localhost:5173';
 
 function validarPassword(p) {
   return p.length >= 8 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /[^A-Za-z0-9]/.test(p);
-}
-
-function crearTransporte() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
 }
 
 // POST /api/auth/login
@@ -78,6 +65,7 @@ router.post('/change-password', authenticate, async (req, res) => {
       [hash, req.user.id]
     );
 
+    await email.passwordCambiada(req.user);
     res.json({ message: 'Password actualizado correctamente' });
   } catch (err) {
     console.error('[auth/change-password]', err);
@@ -102,24 +90,7 @@ router.post('/forgot-password', async (req, res) => {
         [token, expires, user.id]
       );
 
-      const link = `${APP_URL}/reset-password/${token}`;
-      try {
-        const transporte = crearTransporte();
-        await transporte.sendMail({
-          from: process.env.SMTP_FROM || 'HidroTecnica EPP <hidrotecnica14@gmail.com>',
-          to: user.email,
-          subject: 'Recuperación de contraseña - Control EPP HidroTecnica',
-          html: `
-            <p>Hola ${user.nombre},</p>
-            <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-            <p><a href="${link}">Haz clic aquí para restablecer tu contraseña</a></p>
-            <p>Este enlace expira en 1 hora.</p>
-            <p>Si no solicitaste este cambio, ignora este mensaje.</p>
-          `,
-        });
-      } catch (smtpErr) {
-        console.error('[auth/forgot-password] SMTP error:', smtpErr.message);
-      }
+        await email.resetPassword(user, token);
     }
 
     // Siempre responder 200 para no revelar si el email existe

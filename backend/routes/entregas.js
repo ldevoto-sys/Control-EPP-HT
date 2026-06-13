@@ -6,6 +6,7 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../db');
 const { authenticate, authorize } = require('../middleware/auth');
+const email = require('../services/email');
 
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });

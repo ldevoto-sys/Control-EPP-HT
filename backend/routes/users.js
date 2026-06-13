@@ -2,11 +2,9 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { db } = require('../db');
 const { authenticate, authorize } = require('../middleware/auth');
-
-const APP_URL = process.env.APP_URL || 'http://localhost:5173';
+const emailSvc = require('../services/email');
 
 function validarRut(rut) {
   const clean = rut.replace(/\./g, '').replace('-', '');
@@ -20,18 +18,6 @@ function validarRut(rut) {
   const expected = 11 - (sum % 11);
   const dvCalc = expected === 11 ? '0' : expected === 10 ? 'K' : String(expected);
   return dv === dvCalc;
-}
-
-function crearTransporte() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
 }
 
 // Todos los endpoints requieren autenticación
@@ -89,24 +75,7 @@ router.post('/', authorize('administrador'), async (req, res) => {
     );
 
     // Enviar email de bienvenida
-    try {
-      const transporte = crearTransporte();
-      await transporte.sendMail({
-        from: process.env.SMTP_FROM || 'HidroTecnica EPP <hidrotecnica14@gmail.com>',
-        to: email,
-        subject: 'Bienvenido al Sistema Control EPP HidroTecnica',
-        html: `
-          <p>Hola ${nombre},</p>
-          <p>Tu cuenta ha sido creada en el Sistema Control EPP HidroTecnica.</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Contraseña temporal:</strong> ${passwordTemporal}</p>
-          <p>Al ingresar por primera vez deberás cambiar tu contraseña.</p>
-          <p><a href="${APP_URL}">Ingresar al sistema</a></p>
-        `,
-      });
-    } catch (smtpErr) {
-      console.error('[users/POST] SMTP error:', smtpErr.message);
-    }
+    await emailSvc.bienvenida({ nombre, email, rol }, passwordTemporal);
 
     res.status(201).json({ id: result.lastID, nombre, rut, email, rol, activo: 1 });
   } catch (err) {

@@ -13,133 +13,215 @@ export default function RegistrarDevolucion() {
   const [trabajadores, setTrabajadores] = useState([]);
   const [trabajadorId, setTrabajadorId] = useState('');
   const [asignaciones, setAsignaciones] = useState([]);
+  const [cargandoAsig, setCargandoAsig] = useState(false);
+
   const [eppId, setEppId] = useState('');
-  const [cantidad, setCantidad] = useState(1);
-  const [motivo, setMotivo] = useState('deterioro');
+  const [cantidad, setCantidad] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [vuelta, setVuelta] = useState(false);
   const [observacion, setObservacion] = useState('');
-  const [vuelveAStock, setVuelveAStock] = useState(false);
-  const [fechaDevolucion, setFechaDevolucion] = useState(new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [foto, setFoto] = useState(null);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+
+  const [enviando, setEnviando] = useState(false);
+  const [mensaje, setMensaje] = useState(null);
 
   useEffect(() => {
-    api.get('/users/trabajadores').then(r => setTrabajadores(r.data));
+    api.get('/users/trabajadores').then(r => setTrabajadores(r.data)).catch(() => {});
   }, []);
 
-  const handleTrabajador = async (id) => {
+  async function handleTrabajadorChange(id) {
     setTrabajadorId(id);
+    setAsignaciones([]);
     setEppId('');
-    if (!id) { setAsignaciones([]); return; }
-    const r = await api.get(`/asignaciones/trabajador/${id}`);
-    setAsignaciones(r.data.asignaciones || []);
-  };
+    if (!id) return;
+    setCargandoAsig(true);
+    try {
+      const r = await api.get(`/asignaciones/trabajador/${id}`);
+      const eppActual = Array.isArray(r.data) ? r.data : (r.data.epp_actual || []);
+      setAsignaciones(eppActual);
+    } catch {
+      setAsignaciones([]);
+    } finally {
+      setCargandoAsig(false);
+    }
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError(''); setSuccess('');
-    if (!trabajadorId || !eppId || !motivo) return setError('Completa todos los campos requeridos');
+    if (!trabajadorId || !eppId || !cantidad || !motivo) {
+      setMensaje({ tipo: 'error', texto: 'Completa todos los campos obligatorios.' });
+      return;
+    }
+    setEnviando(true);
+    setMensaje(null);
+
     try {
       const fd = new FormData();
       fd.append('trabajador_id', trabajadorId);
       fd.append('epp_id', eppId);
       fd.append('cantidad', cantidad);
       fd.append('motivo', motivo);
+      fd.append('vuelta_a_stock', vuelta ? '1' : '0');
       fd.append('observacion', observacion);
-      fd.append('vuelve_a_stock', vuelveAStock ? 1 : 0);
-      fd.append('fecha_devolucion', fechaDevolucion);
+      fd.append('fecha_devolucion', fecha);
       if (foto) fd.append('foto', foto);
-      await api.post('/devoluciones', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSuccess('Devolución registrada correctamente');
-      setTrabajadorId(''); setEppId(''); setAsignaciones([]);
-      setCantidad(1); setObservacion(''); setFoto(null); setVuelveAStock(false);
+
+      await api.post('/devoluciones', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setMensaje({ tipo: 'ok', texto: 'Devolución registrada correctamente.' });
+      setEppId('');
+      setCantidad('');
+      setMotivo('');
+      setVuelta(false);
+      setObservacion('');
+      setFoto(null);
+      setFecha(new Date().toISOString().split('T')[0]);
+      handleTrabajadorChange(trabajadorId);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al registrar devolución');
+      setMensaje({ tipo: 'error', texto: err?.response?.data?.message || 'Error al registrar devolución.' });
+    } finally {
+      setEnviando(false);
     }
-  };
+  }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-ht-navy mb-6">Registrar Devolución</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Trabajador</label>
-            <select value={trabajadorId} onChange={e => handleTrabajador(e.target.value)}
-              className="w-full border rounded px-3 py-2" required>
-              <option value="">Seleccionar trabajador...</option>
-              {trabajadores.map(t => (
-                <option key={t.id} value={t.id}>{t.nombre} — {t.rut}</option>
-              ))}
-            </select>
-          </div>
+    <div className="p-6 max-w-2xl">
+      <h1 className="text-2xl font-bold text-[#112548] mb-4">Registrar Devolución</h1>
 
-          {asignaciones.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">EPP a devolver</label>
-              <select value={eppId} onChange={e => setEppId(e.target.value)}
-                className="w-full border rounded px-3 py-2" required>
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded p-5 space-y-4">
+
+        {/* Trabajador */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Trabajador *</label>
+          <select
+            value={trabajadorId}
+            onChange={e => handleTrabajadorChange(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+            required
+          >
+            <option value="">Seleccionar trabajador...</option>
+            {trabajadores.map(t => (
+              <option key={t.id} value={t.id}>{t.nombre} — {t.rut}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* EPP asignado */}
+        {trabajadorId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">EPP a devolver *</label>
+            {cargandoAsig && <p className="text-gray-400 text-xs">Cargando EPP asignado...</p>}
+            {!cargandoAsig && (
+              <select
+                value={eppId}
+                onChange={e => setEppId(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+                required
+              >
                 <option value="">Seleccionar EPP...</option>
-                {asignaciones.map(a => (
-                  <option key={a.epp_id} value={a.epp_id}>
-                    {a.epp_nombre} (tiene {a.cantidad})
-                  </option>
+                {asignaciones.map((a, i) => (
+                  <option key={a.epp_id || i} value={a.epp_id}>{a.epp_nombre}</option>
                 ))}
               </select>
-            </div>
-          )}
-
-          {trabajadorId && asignaciones.length === 0 && (
-            <p className="text-gray-500 text-sm">Este trabajador no tiene EPP asignado actualmente.</p>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-              <input type="number" min="1" value={cantidad} onChange={e => setCantidad(e.target.value)}
-                className="w-full border rounded px-3 py-2" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha devolución</label>
-              <input type="date" value={fechaDevolucion} onChange={e => setFechaDevolucion(e.target.value)}
-                className="w-full border rounded px-3 py-2" required />
-            </div>
+            )}
+            {!cargandoAsig && asignaciones.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">Sin EPP asignado actualmente.</p>
+            )}
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
-            <select value={motivo} onChange={e => setMotivo(e.target.value)}
-              className="w-full border rounded px-3 py-2" required>
-              {MOTIVOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
+        {/* Cantidad */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad *</label>
+          <input
+            type="number"
+            min="1"
+            value={cantidad}
+            onChange={e => setCantidad(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+            required
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Observación</label>
-            <textarea value={observacion} onChange={e => setObservacion(e.target.value)}
-              className="w-full border rounded px-3 py-2" rows={2} />
-          </div>
+        {/* Motivo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Motivo *</label>
+          <select
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+            required
+          >
+            <option value="">Seleccionar motivo...</option>
+            {MOTIVOS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={vuelveAStock} onChange={e => setVuelveAStock(e.target.checked)} />
-            El EPP vuelve a stock (está en buen estado)
+        {/* Vuelta a stock */}
+        <div>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={vuelta}
+              onChange={e => setVuelta(e.target.checked)}
+              className="accent-[#34B3DE]"
+            />
+            Vuelve a stock (buen estado)
           </label>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Foto (opcional)</label>
-            <input type="file" accept="image/*" onChange={e => setFoto(e.target.files[0])}
-              className="text-sm" />
-          </div>
+        {/* Observación */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Observación</label>
+          <textarea
+            value={observacion}
+            onChange={e => setObservacion(e.target.value)}
+            rows={2}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+          />
+        </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
+        {/* Fecha */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fecha devolución</label>
+          <input
+            type="date"
+            value={fecha}
+            onChange={e => setFecha(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+          />
+        </div>
 
-          <button type="submit"
-            className="w-full bg-ht-navy text-white py-2 rounded font-medium hover:bg-opacity-90">
-            Registrar Devolución
-          </button>
-        </form>
-      </div>
+        {/* Foto opcional */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Foto (opcional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setFoto(e.target.files[0] || null)}
+            className="text-sm"
+          />
+        </div>
+
+        {mensaje && (
+          <p className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+            {mensaje.texto}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={enviando}
+          className="bg-[#112548] text-white px-5 py-2 rounded hover:opacity-90 text-sm disabled:opacity-50"
+        >
+          {enviando ? 'Registrando...' : 'Registrar devolución'}
+        </button>
+      </form>
     </div>
   );
 }
