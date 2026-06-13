@@ -24,6 +24,11 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/epp', require('./routes/epp'));
 app.use('/api/stock', require('./routes/stock'));
+app.use('/api/solicitudes', require('./routes/solicitudes'));
+app.use('/api/entregas', require('./routes/entregas'));
+app.use('/api/asignaciones', require('./routes/asignaciones'));
+app.use('/api/devoluciones', require('./routes/devoluciones'));
+app.use('/api/reports',     require('./routes/reports'));
 
 // Producción: servir frontend compilado
 if (process.env.NODE_ENV === 'production') {
