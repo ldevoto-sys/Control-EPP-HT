@@ -115,6 +115,7 @@ router.post('/', authorize('bodega', 'administrador'), upload.any(), async (req,
       [solicitud_id, solicitud.trabajador_id, req.user.id, fecha_entrega, observacion || null, fotoRuta]
     );
     const entregaId = entregaResult.lastID;
+    const itemsConNombre = [];
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -152,6 +153,7 @@ router.post('/', authorize('bodega', 'administrador'), upload.any(), async (req,
          VALUES (?, ?, ?, ?, ?, ?)`,
         [entregaId, item.epp_id, item.cantidad, item.numero_serie || null, fechaVencimiento, certRuta]
       );
+      itemsConNombre.push({ epp_nombre: epp.nombre, cantidad: item.cantidad });
 
       const stockAnterior = epp.stock_actual;
       const stockResultante = stockAnterior - item.cantidad;
@@ -202,6 +204,16 @@ router.post('/', authorize('bodega', 'administrador'), upload.any(), async (req,
     );
 
     await db.runAsync('COMMIT');
+
+    // Notificar al trabajador por email (async, no bloquea la respuesta)
+    db.getAsync('SELECT nombre, email FROM users WHERE id=?', [solicitud.trabajador_id])
+      .then(trabajador => {
+        if (trabajador) {
+          email.eppEntregado(trabajador, entregaId, itemsConNombre);
+        }
+      })
+      .catch(() => {});
+
     res.status(201).json({ id: entregaId, message: 'Entrega registrada correctamente' });
   } catch (err) {
     await db.runAsync('ROLLBACK');
