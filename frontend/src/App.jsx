@@ -14,6 +14,13 @@ import Pendientes from './pages/autorizador/Pendientes';
 import RevisionSolicitud from './pages/autorizador/RevisionSolicitud';
 import PendientesEntrega from './pages/bodega/PendientesEntrega';
 import RegistrarEntrega from './pages/bodega/RegistrarEntrega';
+import Stock from './pages/bodega/Stock';
+import IngresoStock from './pages/bodega/IngresoStock';
+import RegistrarDevolucion from './pages/bodega/RegistrarDevolucion';
+import Reportes from './pages/reportes/Reportes';
+import BuscarTrabajador from './pages/consulta/BuscarTrabajador';
+import Documentacion from './pages/consulta/Documentacion';
+import DetalleAsignacion from './pages/consulta/DetalleAsignacion';
 
 const Placeholder = ({ title }) => (
   <div className="p-8 text-center text-gray-500">
@@ -44,12 +51,13 @@ export default function App() {
             <Route path="solicitudes/:id" element={<RevisionSolicitud />} />
             <Route path="entregas/pendientes" element={<ProtectedRoute roles={['bodega','administrador']}><PendientesEntrega /></ProtectedRoute>} />
             <Route path="entregas/:id" element={<ProtectedRoute roles={['bodega','administrador']}><RegistrarEntrega /></ProtectedRoute>} />
-            <Route path="asignaciones" element={<Placeholder title="Asignaciones" />} />
-            <Route path="devoluciones/nueva" element={<Placeholder title="Registrar Devolución" />} />
-            <Route path="stock" element={<Placeholder title="Estado de Stock" />} />
-            <Route path="stock/ingreso" element={<Placeholder title="Ingreso de Stock" />} />
-            <Route path="reportes" element={<Placeholder title="Reportes" />} />
-            <Route path="documentacion" element={<Placeholder title="Documentación EPP" />} />
+            <Route path="asignaciones" element={<BuscarTrabajador />} />
+            <Route path="asignaciones/:id" element={<DetalleAsignacion />} />
+            <Route path="devoluciones/nueva" element={<ProtectedRoute roles={['bodega','administrador']}><RegistrarDevolucion /></ProtectedRoute>} />
+            <Route path="stock" element={<Stock />} />
+            <Route path="stock/ingreso" element={<ProtectedRoute roles={['bodega','administrador']}><IngresoStock /></ProtectedRoute>} />
+            <Route path="reportes" element={<Reportes />} />
+            <Route path="documentacion" element={<ProtectedRoute roles={['administrador','consulta','autorizador']}><Documentacion /></ProtectedRoute>} />
             <Route path="usuarios" element={<ProtectedRoute roles={['administrador']}><Usuarios /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
