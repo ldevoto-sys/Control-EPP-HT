@@ -6,6 +6,14 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CambiarPassword from './pages/CambiarPassword';
 import ForgotPassword from './pages/ForgotPassword';
+import Usuarios from './pages/admin/Usuarios';
+import CatalogoEpp from './pages/admin/CatalogoEpp';
+import NuevaSolicitud from './pages/operador/NuevaSolicitud';
+import MisSolicitudes from './pages/operador/MisSolicitudes';
+import Pendientes from './pages/autorizador/Pendientes';
+import RevisionSolicitud from './pages/autorizador/RevisionSolicitud';
+import PendientesEntrega from './pages/bodega/PendientesEntrega';
+import RegistrarEntrega from './pages/bodega/RegistrarEntrega';
 
 const Placeholder = ({ title }) => (
   <div className="p-8 text-center text-gray-500">
@@ -29,20 +37,20 @@ export default function App() {
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="catalogo" element={<Placeholder title="Catálogo EPP" />} />
-            <Route path="solicitudes" element={<Placeholder title="Solicitudes" />} />
-            <Route path="solicitudes/nueva" element={<Placeholder title="Nueva Solicitud" />} />
-            <Route path="solicitudes/pendientes" element={<Placeholder title="Pendientes de Autorización" />} />
-            <Route path="solicitudes/:id" element={<Placeholder title="Detalle Solicitud" />} />
-            <Route path="entregas/pendientes" element={<Placeholder title="Pendientes de Entrega" />} />
-            <Route path="entregas/:id" element={<Placeholder title="Registrar Entrega" />} />
+            <Route path="catalogo" element={<ProtectedRoute roles={['administrador']}><CatalogoEpp /></ProtectedRoute>} />
+            <Route path="solicitudes" element={<MisSolicitudes />} />
+            <Route path="solicitudes/nueva" element={<ProtectedRoute roles={['operador','autorizador','administrador']}><NuevaSolicitud /></ProtectedRoute>} />
+            <Route path="solicitudes/pendientes" element={<ProtectedRoute roles={['autorizador','administrador']}><Pendientes /></ProtectedRoute>} />
+            <Route path="solicitudes/:id" element={<RevisionSolicitud />} />
+            <Route path="entregas/pendientes" element={<ProtectedRoute roles={['bodega','administrador']}><PendientesEntrega /></ProtectedRoute>} />
+            <Route path="entregas/:id" element={<ProtectedRoute roles={['bodega','administrador']}><RegistrarEntrega /></ProtectedRoute>} />
             <Route path="asignaciones" element={<Placeholder title="Asignaciones" />} />
             <Route path="devoluciones/nueva" element={<Placeholder title="Registrar Devolución" />} />
             <Route path="stock" element={<Placeholder title="Estado de Stock" />} />
             <Route path="stock/ingreso" element={<Placeholder title="Ingreso de Stock" />} />
             <Route path="reportes" element={<Placeholder title="Reportes" />} />
             <Route path="documentacion" element={<Placeholder title="Documentación EPP" />} />
-            <Route path="usuarios" element={<Placeholder title="Usuarios" />} />
+            <Route path="usuarios" element={<ProtectedRoute roles={['administrador']}><Usuarios /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
