@@ -22,6 +22,8 @@ app.use('/uploads', express.static(uploadsDir));
 // Rutas API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/epp', require('./routes/epp'));
+app.use('/api/stock', require('./routes/stock'));
 
 // Producción: servir frontend compilado
 if (process.env.NODE_ENV === 'production') {
