@@ -1,9 +1,13 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-// Limpia el DOM entre pruebas
-afterEach(() => cleanup());
+// Limpia el DOM, mocks y almacenamiento entre pruebas
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+  try { localStorage.clear(); } catch {}
+});
 
 // localStorage mínimo para entorno jsdom (api.js lo usa)
 if (typeof localStorage === 'undefined') {
