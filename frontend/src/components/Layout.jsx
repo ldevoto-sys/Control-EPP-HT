@@ -54,7 +54,7 @@ export default function Layout() {
       <aside className="w-60 flex-shrink-0 bg-ht-navy flex flex-col">
         <div className="px-5 py-4 border-b border-white/10">
           <span className="text-white font-bold text-base">HidroTecnica</span>
-          <span className="text-ht-cyan font-semibold text-sm ml-1">| Control EPP</span>
+          <span className="text-ht-cyan font-semibold text-sm ml-1">| EPP</span>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
           {menu.map(item => (
@@ -80,10 +80,13 @@ export default function Layout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
-          <span className="text-ht-navy font-semibold text-sm">
-            {user?.nombre || user?.email}
-            <span className="ml-2 text-xs text-gray-400 font-normal capitalize">({user?.rol})</span>
-          </span>
+          <div className="flex items-center gap-4">
+            <img src="/Hidrotecnica.jpg" alt="HidroTecnica" className="h-8 object-contain" />
+            <span className="text-ht-navy font-semibold text-sm">
+              {user?.nombre || user?.email}
+              <span className="ml-2 text-xs text-gray-400 font-normal capitalize">({user?.rol})</span>
+            </span>
+          </div>
           <button
             onClick={handleLogout}
             className="text-sm text-gray-500 hover:text-ht-navy transition-colors px-3 py-1 border border-gray-200 rounded hover:border-ht-navy"
