@@ -220,7 +220,7 @@ export default function NuevaSolicitud() {
                               <option value="">-- EPP --</option>
                               {eppDisponibles.map(e => (
                                 <option key={e.id} value={e.id}>
-                                  {e.nombre} ({e.categoria}) — Stock: {e.stock_disponible ?? '—'}
+                                  {e.nombre} ({e.categoria}) — Stock: {e.stock_actual ?? '—'}
                                 </option>
                               ))}
                             </select>

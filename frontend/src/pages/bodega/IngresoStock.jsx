@@ -22,9 +22,10 @@ export default function IngresoStock() {
     setCargandoMov(true);
     try {
       const r = await api.get(`/stock/${id}/movimientos`);
-      const ingresos = r.data.filter(m => m.tipo === 'ingreso');
+      const movs = Array.isArray(r.data) ? r.data : (r.data.movimientos || []);
+      const ingresos = movs.filter(m => m.tipo === 'ingreso');
       setMovimientos(ingresos);
-      if (r.data.length > 0) setStockActual(r.data[0].stock_resultante);
+      if (movs.length > 0) setStockActual(movs[0].stock_resultante);
     } catch {
       setMovimientos([]);
     } finally {
@@ -163,7 +164,7 @@ export default function IngresoStock() {
                       <td className="px-3 py-2 text-center">{m.cantidad}</td>
                       <td className="px-3 py-2 text-center">{m.stock_resultante}</td>
                       <td className="px-3 py-2">{m.referencia ?? '—'}</td>
-                      <td className="px-3 py-2">{m.usuario}</td>
+                      <td className="px-3 py-2">{m.usuario_nombre ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

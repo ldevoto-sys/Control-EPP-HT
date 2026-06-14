@@ -28,7 +28,7 @@ export default function Stock() {
     setCargandoMov(true);
     try {
       const r = await api.get(`/stock/${item.epp_id}/movimientos`);
-      setMovimientos(r.data);
+      setMovimientos(Array.isArray(r.data) ? r.data : (r.data.movimientos || []));
     } catch {
       setMovimientos([]);
     } finally {
@@ -145,7 +145,7 @@ export default function Stock() {
                       <td className="px-3 py-2 text-center">{m.cantidad}</td>
                       <td className="px-3 py-2 text-center">{m.stock_resultante}</td>
                       <td className="px-3 py-2">{m.fecha}</td>
-                      <td className="px-3 py-2">{m.usuario}</td>
+                      <td className="px-3 py-2">{m.usuario_nombre ?? '—'}</td>
                       <td className="px-3 py-2">{m.referencia ?? '—'}</td>
                     </tr>
                   ))}

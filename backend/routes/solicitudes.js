@@ -45,7 +45,8 @@ router.get('/pendientes', authorize('autorizador', 'administrador'), async (req,
     const rows = await db.allAsync(`
       SELECT s.*,
         u1.nombre AS solicitante_nombre, u1.rut AS solicitante_rut,
-        u2.nombre AS trabajador_nombre, u2.rut AS trabajador_rut
+        u2.nombre AS trabajador_nombre, u2.rut AS trabajador_rut,
+        (SELECT COUNT(*) FROM solicitud_items si WHERE si.solicitud_id = s.id) AS items_count
       FROM solicitudes_epp s
       JOIN users u1 ON u1.id = s.solicitante_id
       JOIN users u2 ON u2.id = s.trabajador_id
@@ -80,7 +81,8 @@ router.get('/:id', async (req, res) => {
     }
 
     const items = await db.allAsync(`
-      SELECT si.*, ec.nombre AS epp_nombre, ec.unidad, ec.categoria
+      SELECT si.*, ec.nombre AS epp_nombre, ec.unidad, ec.categoria,
+             ec.stock_actual AS stock_disponible
       FROM solicitud_items si
       JOIN epp_catalogo ec ON ec.id = si.epp_id
       WHERE si.solicitud_id = ?
