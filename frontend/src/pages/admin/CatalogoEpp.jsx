@@ -149,6 +149,18 @@ export default function CatalogoEpp() {
     }
   };
 
+  // --- Eliminar EPP ---
+  const eliminarEpp = async (epp) => {
+    if (!window.confirm(`¿Eliminar "${epp.nombre}"? Esta acción no se puede deshacer.`)) return;
+    setError('');
+    try {
+      await api.delete(`/epp/${epp.id}`);
+      await cargar();
+    } catch (err) {
+      setError(err.response?.data?.error ?? 'Error al eliminar EPP.');
+    }
+  };
+
   // --- Subida foto ---
   const subirFoto = async (epp) => {
     const file = fotoRef.current?.files?.[0];
@@ -302,6 +314,12 @@ export default function CatalogoEpp() {
                         {(uploadingFoto === epp.id || uploadingCert === epp.id) && (
                           <span className="text-xs text-gray-400">Subiendo...</span>
                         )}
+                        <button
+                          onClick={() => eliminarEpp(epp)}
+                          className="text-xs text-red-500 hover:underline font-medium"
+                        >
+                          Eliminar
+                        </button>
                       </div>
                     </td>
                   </tr>

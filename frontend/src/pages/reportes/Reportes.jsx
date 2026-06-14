@@ -49,23 +49,32 @@ export default function Reportes() {
     <div className="p-6 space-y-8">
       <h1 className="text-2xl font-bold text-[#112548]">Reportes</h1>
 
+      {/* Bloque: Matriz EPP */}
       <section className="border border-gray-200 rounded p-5">
         <h2 className="text-lg font-semibold text-[#112548] mb-2">Matriz EPP</h2>
         <p className="text-sm text-gray-500 mb-3">Vista completa de asignaciones por trabajador y EPP.</p>
-        <Link to="/documentacion" className="inline-block bg-[#112548] text-white px-4 py-2 rounded text-sm hover:opacity-90">
+        <Link
+          to="/documentacion"
+          className="inline-block bg-[#112548] text-white px-4 py-2 rounded text-sm hover:opacity-90"
+        >
           Ver matriz
         </Link>
       </section>
 
+      {/* Bloque: Exportar CSV */}
       <section className="border border-gray-200 rounded p-5">
         <h2 className="text-lg font-semibold text-[#112548] mb-2">Exportar CSV</h2>
         <p className="text-sm text-gray-500 mb-3">Descarga la matriz completa en formato CSV.</p>
-        <button onClick={handleDescargarCsv} disabled={descargando}
-          className="bg-[#34B3DE] text-white px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-50">
+        <button
+          onClick={handleDescargarCsv}
+          disabled={descargando}
+          className="bg-[#34B3DE] text-white px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-50"
+        >
           {descargando ? 'Descargando...' : 'Descargar CSV'}
         </button>
       </section>
 
+      {/* Bloque: Stock Crítico */}
       <section className="border border-gray-200 rounded p-5">
         <h2 className="text-lg font-semibold text-[#112548] mb-3">Stock Crítico</h2>
         {cargando && <p className="text-gray-500 text-sm">Cargando...</p>}
@@ -96,6 +105,7 @@ export default function Reportes() {
         )}
       </section>
 
+      {/* Bloque: EPP Por Vencer */}
       <section className="border border-gray-200 rounded p-5">
         <h2 className="text-lg font-semibold text-[#112548] mb-3">EPP Por Vencer / Vencidos</h2>
         {cargando && <p className="text-gray-500 text-sm">Cargando...</p>}
@@ -125,6 +135,7 @@ export default function Reportes() {
                 </tbody>
               </table>
             </div>
+
             <h3 className="text-sm font-semibold text-red-600 mb-2">Vencidos</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
@@ -153,22 +164,28 @@ export default function Reportes() {
         )}
       </section>
 
+      {/* Bloque: PDF por trabajador */}
       <section className="border border-gray-200 rounded p-5">
         <h2 className="text-lg font-semibold text-[#112548] mb-3">PDF por Trabajador</h2>
         <div className="flex gap-3 items-end flex-wrap">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar trabajador</label>
-            <select value={trabajadorSel} onChange={e => setTrabajadorSel(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]">
+            <select
+              value={trabajadorSel}
+              onChange={e => setTrabajadorSel(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#34B3DE]"
+            >
               <option value="">Seleccionar...</option>
               {trabajadores.map(t => (
                 <option key={t.id} value={t.id}>{t.nombre} — {t.rut}</option>
               ))}
             </select>
           </div>
-          <button disabled={!trabajadorSel}
+          <button
+            disabled={!trabajadorSel}
             onClick={() => descargarPdfTrabajador(trabajadorSel, trabajadorSelObj?.nombre || 'trabajador')}
-            className="bg-[#112548] text-white px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-40">
+            className="bg-[#112548] text-white px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-40"
+          >
             Descargar PDF
           </button>
         </div>

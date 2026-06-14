@@ -40,7 +40,7 @@ export default function BuscarTrabajador() {
     setCargandoAsig(true);
     try {
       const r = await api.get(`/asignaciones/trabajador/${trabajador.id}`);
-      setAsignaciones(r.data);
+      setAsignaciones(r.data.asignaciones || []);
     } catch {
       setAsignaciones([]);
     } finally {

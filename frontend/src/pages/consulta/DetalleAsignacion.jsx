@@ -67,8 +67,8 @@ export default function DetalleAsignacion({ trabajadorIdProp }) {
   if (error) return <div className="p-6 text-red-600">{error}</div>;
   if (!datos) return null;
 
-  const eppActual = datos.epp_actual || [];
-  const historial = datos.historial || [];
+  const eppActual = datos.asignaciones || [];
+  const historial = datos.historial_entregas || [];
   const trabajador = datos.trabajador || {};
 
   return (

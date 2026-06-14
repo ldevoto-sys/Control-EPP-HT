@@ -38,11 +38,18 @@ export default function Usuarios() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [editando, setEditando] = useState(null); // null = crear, objeto = editar
+  const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Filtros y ordenamiento
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [sortCol, setSortCol] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
 
   const cargarUsuarios = async () => {
     setLoading(true);
@@ -137,6 +144,31 @@ export default function Usuarios() {
     }
   };
 
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  };
+
+  const usuariosFiltrados = usuarios
+    .filter(u => {
+      const txt = filtroTexto.toLowerCase();
+      if (txt && !u.nombre?.toLowerCase().includes(txt) && !u.rut?.toLowerCase().includes(txt) && !u.email?.toLowerCase().includes(txt)) return false;
+      if (filtroRol && u.rol !== filtroRol) return false;
+      if (filtroEstado === 'activo' && !u.activo) return false;
+      if (filtroEstado === 'inactivo' && u.activo) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const va = (a[sortCol] ?? '').toString().toLowerCase();
+      const vb = (b[sortCol] ?? '').toString().toLowerCase();
+      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <span className="text-gray-300 ml-1">↕</span>;
+    return <span className="text-ht-cyan ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -147,6 +179,42 @@ export default function Usuarios() {
         >
           + Nuevo Usuario
         </button>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <input
+          type="text"
+          placeholder="Buscar nombre, RUT o email..."
+          value={filtroTexto}
+          onChange={e => setFiltroTexto(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan w-64"
+        />
+        <select
+          value={filtroRol}
+          onChange={e => setFiltroRol(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan"
+        >
+          <option value="">Todos los roles</option>
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <select
+          value={filtroEstado}
+          onChange={e => setFiltroEstado(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan"
+        >
+          <option value="">Todos los estados</option>
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+        {(filtroTexto || filtroRol || filtroEstado) && (
+          <button
+            onClick={() => { setFiltroTexto(''); setFiltroRol(''); setFiltroEstado(''); }}
+            className="text-xs text-gray-500 hover:text-ht-navy underline"
+          >
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {error && (
@@ -162,21 +230,29 @@ export default function Usuarios() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Nombre</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">RUT</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Rol</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none" onClick={() => toggleSort('nombre')}>
+                  Nombre <SortIcon col="nombre" />
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none" onClick={() => toggleSort('rut')}>
+                  RUT <SortIcon col="rut" />
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none" onClick={() => toggleSort('email')}>
+                  Email <SortIcon col="email" />
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none" onClick={() => toggleSort('rol')}>
+                  Rol <SortIcon col="rol" />
+                </th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Estado</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {usuarios.length === 0 && (
+              {usuariosFiltrados.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-gray-400">Sin usuarios.</td>
                 </tr>
               )}
-              {usuarios.map(u => (
+              {usuariosFiltrados.map(u => (
                 <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{u.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{u.rut}</td>
