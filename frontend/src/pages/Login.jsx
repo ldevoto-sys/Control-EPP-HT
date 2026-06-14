@@ -33,7 +33,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-xl shadow-md w-full max-w-sm p-8">
-        <h1 className="text-2xl font-bold text-ht-navy text-center mb-1">HidroTecnica SpA</h1>
+        <div className="flex justify-center mb-4">
+          <img src="/Hidrotecnica.jpg" alt="HidroTecnica" className="h-12 object-contain" />
+        </div>
         <p className="text-center text-ht-cyan font-medium mb-6">Control de EPP</p>
 
         {error && (
