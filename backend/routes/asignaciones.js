@@ -111,13 +111,22 @@ router.get('/trabajador/:id', async (req, res) => {
     }));
 
     const historialEntregas = await db.allAsync(`
-      SELECT e.*, ec.nombre AS epp_nombre
+      SELECT e.id, e.fecha_entrega, e.observacion, e.pdf_entrega, e.pdf_firmado, e.solicitud_id,
+        u.nombre AS bodeguero_nombre
       FROM entregas_epp e
-      JOIN entrega_items ei ON ei.entrega_id = e.id
-      JOIN epp_catalogo ec ON ec.id = ei.epp_id
+      LEFT JOIN users u ON u.id = e.bodeguero_id
       WHERE e.trabajador_id = ?
       ORDER BY e.fecha_entrega DESC
     `, [req.params.id]);
+
+    for (const entrega of historialEntregas) {
+      entrega.items = await db.allAsync(`
+        SELECT ei.cantidad, ei.numero_serie, ec.nombre AS epp_nombre
+        FROM entrega_items ei
+        JOIN epp_catalogo ec ON ec.id = ei.epp_id
+        WHERE ei.entrega_id = ?
+      `, [entrega.id]);
+    }
 
     res.json({
       trabajador,

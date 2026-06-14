@@ -224,4 +224,36 @@ router.post('/:id/ingreso-stock', authorize('administrador', 'bodega'), async (r
   }
 });
 
+// DELETE /api/epp/:id — eliminar EPP si no tiene referencias
+router.delete('/:id', authorize('administrador'), async (req, res) => {
+  try {
+    const epp = await db.getAsync('SELECT * FROM epp_catalogo WHERE id = ?', [req.params.id]);
+    if (!epp) return res.status(404).json({ error: 'EPP no encontrado' });
+
+    const enUso = await db.getAsync(`
+      SELECT 1 FROM (
+        SELECT epp_id FROM asignaciones_activas WHERE epp_id = ?
+        UNION ALL
+        SELECT epp_id FROM entrega_items WHERE epp_id = ?
+        UNION ALL
+        SELECT epp_id FROM solicitud_items WHERE epp_id = ?
+        UNION ALL
+        SELECT epp_id FROM stock_movimientos WHERE epp_id = ?
+      ) LIMIT 1
+    `, [req.params.id, req.params.id, req.params.id, req.params.id]);
+
+    if (enUso) {
+      return res.status(409).json({
+        error: 'No se puede eliminar: el EPP tiene registros asociados. Puede inactivarlo desde Editar.'
+      });
+    }
+
+    await db.runAsync('DELETE FROM epp_catalogo WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[EPP] DELETE /:id:', err);
+    res.status(500).json({ error: 'Error al eliminar EPP' });
+  }
+});
+
 module.exports = router;
