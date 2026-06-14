@@ -35,11 +35,15 @@ export default function Dashboard() {
             api.get('/entregas/pendientes'),
             api.get('/reports/vencimientos'),
           ]);
+          const venc = vencimientos.value?.data;
+          const vencCount = venc
+            ? (venc.proximos_a_vencer?.length ?? 0) + (venc.vencidos?.length ?? 0)
+            : 0;
           setData({
             stockCritico: stockCritico.value?.data?.total ?? stockCritico.value?.data?.length ?? 0,
             solicPend: solicPend.value?.data?.total ?? solicPend.value?.data?.length ?? 0,
             entregasPend: entregasPend.value?.data?.total ?? entregasPend.value?.data?.length ?? 0,
-            vencimientos: vencimientos.value?.data?.total ?? vencimientos.value?.data?.length ?? 0,
+            vencimientos: vencCount,
           });
         } else if (user?.rol === 'autorizador') {
           const res = await api.get('/solicitudes/pendientes').catch(() => ({ data: [] }));

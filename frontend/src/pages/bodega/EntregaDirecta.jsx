@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
-const emptyItem = { epp_id: '', cantidad: 1, numero_serie: '' };
+let itemSeq = 0;
+const nuevoItem = () => ({ uid: `item-${itemSeq++}`, epp_id: '', cantidad: 1, numero_serie: '' });
 
 export default function EntregaDirecta() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function EntregaDirecta() {
     fecha_entrega: new Date().toISOString().slice(0, 10),
     observacion: '',
   });
-  const [items, setItems] = useState([{ ...emptyItem }]);
+  const [items, setItems] = useState([nuevoItem()]);
   const [foto, setFoto] = useState(null);
   const [certificados, setCertificados] = useState({});
   const [saving, setSaving] = useState(false);
@@ -24,15 +25,25 @@ export default function EntregaDirecta() {
     api.get('/epp').then(r => setCatalogo(Array.isArray(r.data) ? r.data : r.data.data ?? [])).catch(() => {});
   }, []);
 
-  const addItem = () => setItems(prev => [...prev, { ...emptyItem }]);
-  const removeItem = (i) => setItems(prev => prev.filter((_, idx) => idx !== i));
+  const addItem = () => setItems(prev => [...prev, nuevoItem()]);
+  const removeItem = (i) => setItems(prev => {
+    const removed = prev[i];
+    if (removed) {
+      setCertificados(c => {
+        const next = { ...c };
+        delete next[removed.uid];
+        return next;
+      });
+    }
+    return prev.filter((_, idx) => idx !== i);
+  });
 
   const updateItem = (i, field, value) => {
     setItems(prev => prev.map((it, idx) => idx === i ? { ...it, [field]: value } : it));
   };
 
-  const handleCertificado = (i, file) => {
-    setCertificados(prev => ({ ...prev, [i]: file }));
+  const handleCertificado = (uid, file) => {
+    setCertificados(prev => ({ ...prev, [uid]: file }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,8 +68,8 @@ export default function EntregaDirecta() {
         numero_serie: it.numero_serie || null,
       }))));
       if (foto) fd.append('foto', foto);
-      items.forEach((_, i) => {
-        if (certificados[i]) fd.append(`certificado_${i}`, certificados[i]);
+      items.forEach((it, i) => {
+        if (certificados[it.uid]) fd.append(`certificado_${i}`, certificados[it.uid]);
       });
 
       await api.post('/entregas/directa', fd, {
@@ -125,7 +136,7 @@ export default function EntregaDirecta() {
           </div>
           <div className="space-y-3">
             {items.map((item, i) => (
-              <div key={i} className="border border-gray-200 rounded p-3 space-y-2">
+              <div key={item.uid} className="border border-gray-200 rounded p-3 space-y-2">
                 <div className="flex gap-2">
                   <select
                     value={item.epp_id}
@@ -167,7 +178,7 @@ export default function EntregaDirecta() {
                   <input
                     type="file"
                     accept=".pdf,image/*"
-                    onChange={e => handleCertificado(i, e.target.files[0])}
+                    onChange={e => handleCertificado(item.uid, e.target.files[0])}
                     className="text-xs text-gray-600"
                   />
                 </div>

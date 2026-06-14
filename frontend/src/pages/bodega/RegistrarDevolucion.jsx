@@ -38,7 +38,7 @@ export default function RegistrarDevolucion() {
     setCargandoAsig(true);
     try {
       const r = await api.get(`/asignaciones/trabajador/${id}`);
-      const eppActual = Array.isArray(r.data) ? r.data : (r.data.epp_actual || []);
+      const eppActual = Array.isArray(r.data) ? r.data : (r.data.asignaciones || []);
       setAsignaciones(eppActual);
     } catch {
       setAsignaciones([]);

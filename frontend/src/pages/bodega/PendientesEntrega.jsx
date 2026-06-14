@@ -49,8 +49,8 @@ export default function PendientesEntrega() {
                   <td className="px-4 py-3">{s.trabajador_nombre || s.trabajador?.nombre || '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{s.trabajador_rut || s.trabajador?.rut || '—'}</td>
                   <td className="px-4 py-3 text-gray-500">
-                    {s.fecha_aprobacion
-                      ? new Date(s.fecha_aprobacion).toLocaleDateString('es-CL')
+                    {s.fecha_resolucion
+                      ? new Date(s.fecha_resolucion).toLocaleDateString('es-CL')
                       : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">

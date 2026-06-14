@@ -64,11 +64,11 @@ router.get('/matriz', authorize('administrador', 'consulta', 'autorizador'), asy
       LEFT JOIN entregas_epp e ON e.id = aa.entrega_id
     `);
 
-    const asignaciones = {};
-    for (const a of asignacionesRaw) {
+    const asignaciones = asignacionesRaw.map(a => {
       const { dias_para_vencer, estado_vencimiento } = calcularEstadoVencimiento(a.fecha_vencimiento);
-      const key = `${a.trabajador_id}_${a.epp_id}`;
-      asignaciones[key] = {
+      return {
+        trabajador_id: a.trabajador_id,
+        epp_id: a.epp_id,
         entrega_id: a.entrega_id,
         cantidad: a.cantidad,
         fecha_asignacion: a.fecha_asignacion,
@@ -78,7 +78,7 @@ router.get('/matriz', authorize('administrador', 'consulta', 'autorizador'), asy
         pdf_firmado: a.pdf_firmado,
         pdf_entrega: a.pdf_entrega
       };
-    }
+    });
 
     res.json({ trabajadores, epps, asignaciones });
   } catch (err) {

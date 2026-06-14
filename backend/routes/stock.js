@@ -11,7 +11,8 @@ router.use(authenticate);
 router.get('/', authorize('administrador', 'bodega', 'consulta'), async (req, res) => {
   try {
     const rows = await db.allAsync(`
-      SELECT id, nombre, categoria, descripcion, unidad, vida_util_meses,
+      SELECT id, id AS epp_id, nombre, nombre AS epp_nombre,
+             categoria, descripcion, unidad, vida_util_meses,
              stock_actual, stock_minimo, activo, foto_catalogo, certificado_tecnico, created_at
       FROM epp_catalogo
       ORDER BY categoria ASC, nombre ASC

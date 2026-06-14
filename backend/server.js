@@ -44,14 +44,18 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Iniciar
-initDb()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`[Server] Servidor corriendo en http://localhost:${PORT}`);
+// Iniciar solo cuando se ejecuta directamente (no al importar en pruebas)
+if (require.main === module) {
+  initDb()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`[Server] Servidor corriendo en http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('[Server] Error al inicializar DB:', err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error('[Server] Error al inicializar DB:', err);
-    process.exit(1);
-  });
+}
+
+module.exports = { app, initDb };

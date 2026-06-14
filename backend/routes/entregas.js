@@ -25,12 +25,13 @@ router.get('/pendientes', authorize('bodega', 'administrador'), async (req, res)
     const rows = await db.allAsync(`
       SELECT s.*,
         u1.nombre AS solicitante_nombre,
-        u2.nombre AS trabajador_nombre, u2.rut AS trabajador_rut
+        u2.nombre AS trabajador_nombre, u2.rut AS trabajador_rut,
+        (SELECT COUNT(*) FROM solicitud_items si WHERE si.solicitud_id = s.id) AS items_count
       FROM solicitudes_epp s
       JOIN users u1 ON u1.id = s.solicitante_id
       JOIN users u2 ON u2.id = s.trabajador_id
       WHERE s.estado = 'aprobada'
-        AND s.id NOT IN (SELECT solicitud_id FROM entregas_epp)
+        AND s.id NOT IN (SELECT solicitud_id FROM entregas_epp WHERE solicitud_id IS NOT NULL)
       ORDER BY s.fecha_resolucion ASC
     `);
     res.json(rows);
