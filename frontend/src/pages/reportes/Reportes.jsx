@@ -32,7 +32,7 @@ export default function Reportes() {
 
   useEffect(() => {
     Promise.all([
-      api.get('/reports/stock-critico').then(r => setStockCritico(r.data)).catch(() => {}),
+      api.get('/reports/stock-critico').then(r => setStockCritico(r.data.items || r.data)).catch(() => {}),
       api.get('/reports/vencimientos').then(r => setVencimientos(r.data)).catch(() => {}),
       api.get('/users/trabajadores').then(r => setTrabajadores(r.data)).catch(() => {}),
     ]).finally(() => setCargando(false));
@@ -94,7 +94,7 @@ export default function Reportes() {
                 )}
                 {stockCritico.map((s, i) => (
                   <tr key={i} className="border-t">
-                    <td className="px-4 py-2">{s.epp_nombre}</td>
+                    <td className="px-4 py-2">{s.nombre}</td>
                     <td className="px-4 py-2 text-center text-red-600 font-semibold">{s.stock_actual}</td>
                     <td className="px-4 py-2 text-center">{s.stock_minimo}</td>
                   </tr>
