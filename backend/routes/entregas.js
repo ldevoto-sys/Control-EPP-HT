@@ -40,6 +40,134 @@ router.get('/pendientes', authorize('bodega', 'administrador'), async (req, res)
   }
 });
 
+// POST /directa — entrega sin solicitud previa
+router.post('/directa', authorize('bodega', 'autorizador', 'administrador'), upload.any(), async (req, res) => {
+  const { trabajador_id, observacion } = req.body;
+  const fecha_entrega = req.body.fecha_entrega || new Date().toISOString().split('T')[0];
+
+  if (!trabajador_id) return res.status(400).json({ error: 'trabajador_id es requerido' });
+
+  let items;
+  try {
+    items = JSON.parse(req.body.items || '[]');
+  } catch {
+    return res.status(400).json({ error: 'items debe ser un JSON válido' });
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'items es requerido y no puede estar vacío' });
+  }
+
+  // Mapear archivos subidos por nombre
+  const fileMap = {};
+  if (req.files) {
+    for (const f of req.files) {
+      fileMap[f.fieldname] = f;
+    }
+  }
+
+  await db.runAsync('BEGIN TRANSACTION');
+  try {
+    const trabajador = await db.getAsync('SELECT * FROM users WHERE id = ? AND activo = 1', [trabajador_id]);
+    if (!trabajador) {
+      await db.runAsync('ROLLBACK');
+      return res.status(404).json({ error: 'Trabajador no encontrado o inactivo' });
+    }
+
+    const fotoFile = fileMap['foto'];
+    const fotoRuta = fotoFile ? `/uploads/${fotoFile.filename}` : null;
+
+    const entregaResult = await db.runAsync(
+      `INSERT INTO entregas_epp (solicitud_id, trabajador_id, bodeguero_id, fecha_entrega, observacion, foto_entrega)
+       VALUES (NULL, ?, ?, ?, ?, ?)`,
+      [trabajador_id, req.user.id, fecha_entrega, observacion || null, fotoRuta]
+    );
+    const entregaId = entregaResult.lastID;
+    const itemsConNombre = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.epp_id || !item.cantidad) {
+        await db.runAsync('ROLLBACK');
+        return res.status(400).json({ error: `Item ${i}: epp_id y cantidad son requeridos` });
+      }
+
+      const certFile = fileMap[`certificado_${i}`] || fileMap[`certificados_${i}`];
+      const certRuta = certFile ? `/uploads/${certFile.filename}` : null;
+
+      const epp = await db.getAsync('SELECT * FROM epp_catalogo WHERE id = ?', [item.epp_id]);
+      if (!epp) {
+        await db.runAsync('ROLLBACK');
+        return res.status(404).json({ error: `EPP id=${item.epp_id} no encontrado` });
+      }
+
+      let fechaVencimiento = null;
+      if (epp.vida_util_meses) {
+        const fechaBase = new Date(fecha_entrega);
+        fechaBase.setMonth(fechaBase.getMonth() + epp.vida_util_meses);
+        fechaVencimiento = fechaBase.toISOString().split('T')[0];
+      }
+
+      if (epp.stock_actual < item.cantidad) {
+        await db.runAsync('ROLLBACK');
+        return res.status(400).json({ error: `Stock insuficiente para '${epp.nombre}': disponible=${epp.stock_actual}, solicitado=${item.cantidad}` });
+      }
+
+      await db.runAsync(
+        `INSERT INTO entrega_items (entrega_id, epp_id, cantidad, numero_serie, fecha_vencimiento, certificado_adjunto)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [entregaId, item.epp_id, item.cantidad, item.numero_serie || null, fechaVencimiento, certRuta]
+      );
+      itemsConNombre.push({ epp_nombre: epp.nombre, cantidad: item.cantidad });
+
+      const stockAnterior = epp.stock_actual;
+      const stockResultante = stockAnterior - item.cantidad;
+
+      await db.runAsync(
+        'UPDATE epp_catalogo SET stock_actual = ? WHERE id = ?',
+        [stockResultante, item.epp_id]
+      );
+
+      await db.runAsync(
+        `INSERT INTO stock_movimientos
+           (epp_id, tipo, cantidad, stock_anterior, stock_resultante, referencia, usuario_id, fecha)
+         VALUES (?, 'egreso', ?, ?, ?, ?, ?, ?)`,
+        [item.epp_id, -item.cantidad, stockAnterior, stockResultante, `Entrega directa #${entregaId}`, req.user.id, fecha_entrega]
+      );
+
+      const asignacion = await db.getAsync(
+        'SELECT * FROM asignaciones_activas WHERE trabajador_id = ? AND epp_id = ?',
+        [trabajador_id, item.epp_id]
+      );
+
+      if (asignacion) {
+        await db.runAsync(
+          `UPDATE asignaciones_activas
+           SET cantidad = cantidad + ?, fecha_asignacion = ?, fecha_vencimiento = ?, entrega_id = ?
+           WHERE trabajador_id = ? AND epp_id = ?`,
+          [item.cantidad, fecha_entrega, fechaVencimiento, entregaId, trabajador_id, item.epp_id]
+        );
+      } else {
+        await db.runAsync(
+          `INSERT INTO asignaciones_activas (trabajador_id, epp_id, cantidad, fecha_asignacion, fecha_vencimiento, entrega_id)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [trabajador_id, item.epp_id, item.cantidad, fecha_entrega, fechaVencimiento, entregaId]
+        );
+      }
+    }
+
+    await db.runAsync('COMMIT');
+
+    // Notificar al trabajador por email (async, no bloquea la respuesta)
+    email.eppEntregado(trabajador, entregaId, itemsConNombre);
+
+    res.status(201).json({ id: entregaId, message: 'Entrega registrada correctamente' });
+  } catch (err) {
+    await db.runAsync('ROLLBACK');
+    console.error('[Entregas] POST /directa:', err);
+    res.status(500).json({ error: 'Error al registrar entrega directa' });
+  }
+});
+
 // GET /:id — detalle de una entrega con sus items
 router.get('/:id', async (req, res) => {
   try {

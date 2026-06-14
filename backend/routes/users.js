@@ -58,6 +58,9 @@ router.post('/', authorize('administrador'), async (req, res) => {
 
     if (!validarRut(rut)) return res.status(400).json({ error: 'RUT inválido' });
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return res.status(400).json({ error: 'Email inválido' });
+
     const emailExiste = await db.getAsync('SELECT id FROM users WHERE email = ?', [email]);
     if (emailExiste) return res.status(409).json({ error: 'El email ya está registrado' });
 
@@ -94,6 +97,9 @@ router.put('/:id', authorize('administrador'), async (req, res) => {
       return res.status(400).json({ error: 'Campos requeridos: nombre, rut, email, rol' });
 
     if (!validarRut(rut)) return res.status(400).json({ error: 'RUT inválido' });
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return res.status(400).json({ error: 'Email inválido' });
 
     const user = await db.getAsync('SELECT id FROM users WHERE id = ?', [id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });

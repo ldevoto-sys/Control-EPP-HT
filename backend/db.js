@@ -104,7 +104,7 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS entregas_epp (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      solicitud_id INTEGER NOT NULL REFERENCES solicitudes_epp(id),
+      solicitud_id INTEGER REFERENCES solicitudes_epp(id),
       trabajador_id INTEGER NOT NULL REFERENCES users(id),
       bodeguero_id INTEGER NOT NULL REFERENCES users(id),
       fecha_entrega TEXT NOT NULL,
@@ -211,6 +211,37 @@ async function initDb() {
       );
     }
     console.log('[DB] Catálogo EPP inicial creado.');
+  }
+
+  // Migración: permitir solicitud_id NULL en entregas_epp (entrega directa sin solicitud)
+  try {
+    const cols = await db.allAsync("PRAGMA table_info(entregas_epp)");
+    const colSolicitud = cols.find(c => c.name === 'solicitud_id');
+    if (colSolicitud && colSolicitud.notnull === 1) {
+      // SQLite no soporta DROP NOT NULL directamente; reconstruir la tabla
+      await db.execAsync(`
+        PRAGMA foreign_keys = OFF;
+        CREATE TABLE IF NOT EXISTS entregas_epp_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          solicitud_id INTEGER REFERENCES solicitudes_epp(id),
+          trabajador_id INTEGER NOT NULL REFERENCES users(id),
+          bodeguero_id INTEGER NOT NULL REFERENCES users(id),
+          fecha_entrega TEXT NOT NULL,
+          observacion TEXT,
+          foto_entrega TEXT,
+          pdf_entrega TEXT,
+          pdf_firmado TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        );
+        INSERT INTO entregas_epp_new SELECT * FROM entregas_epp;
+        DROP TABLE entregas_epp;
+        ALTER TABLE entregas_epp_new RENAME TO entregas_epp;
+        PRAGMA foreign_keys = ON;
+      `);
+      console.log('[DB] Migración: solicitud_id ahora permite NULL en entregas_epp.');
+    }
+  } catch (migErr) {
+    console.error('[DB] Error en migración entregas_epp:', migErr);
   }
 
   console.log('[DB] Base de datos lista.');

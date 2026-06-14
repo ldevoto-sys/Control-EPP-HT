@@ -14,6 +14,7 @@ import Pendientes from './pages/autorizador/Pendientes';
 import RevisionSolicitud from './pages/autorizador/RevisionSolicitud';
 import PendientesEntrega from './pages/bodega/PendientesEntrega';
 import RegistrarEntrega from './pages/bodega/RegistrarEntrega';
+import EntregaDirecta from './pages/bodega/EntregaDirecta';
 import Stock from './pages/bodega/Stock';
 import IngresoStock from './pages/bodega/IngresoStock';
 import RegistrarDevolucion from './pages/bodega/RegistrarDevolucion';
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="solicitudes/pendientes" element={<ProtectedRoute roles={['autorizador','administrador']}><Pendientes /></ProtectedRoute>} />
             <Route path="solicitudes/:id" element={<RevisionSolicitud />} />
             <Route path="entregas/pendientes" element={<ProtectedRoute roles={['bodega','administrador']}><PendientesEntrega /></ProtectedRoute>} />
+            <Route path="entregas/directa" element={<ProtectedRoute roles={['bodega','autorizador','administrador']}><EntregaDirecta /></ProtectedRoute>} />
             <Route path="entregas/:id" element={<ProtectedRoute roles={['bodega','administrador']}><RegistrarEntrega /></ProtectedRoute>} />
             <Route path="asignaciones" element={<BuscarTrabajador />} />
             <Route path="asignaciones/:id" element={<DetalleAsignacion />} />
