@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HT-AP-03 — Pruebas Automatizadas Control de EPP</title>
+<style>
+  :root {
+    --navy: #112548;
+    --cyan: #34B3DE;
+    --gris: #555555;
+    --blanco: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--navy);
+    line-height: 1.55;
+    margin: 0;
+    background: var(--blanco);
+  }
+  .pagina {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 48px 64px;
+  }
+  /* Encabezado: logo bi-color sobre fondo blanco (regla de marca) */
+  header.marca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--cyan);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+  header.marca img {
+    height: 48px;   /* proporción original, sin deformar */
+    width: auto;
+  }
+  header.marca .doc-id {
+    text-align: right;
+    font-size: 13px;
+    color: var(--gris);
+  }
+  header.marca .doc-id strong { color: var(--navy); }
+
+  h1 {
+    font-size: 26px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .subtitulo { color: var(--cyan); font-weight: 600; margin: 0 0 28px; }
+
+  h2 {
+    font-size: 19px;
+    color: var(--navy);
+    margin: 34px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  h2 .num {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--blanco);
+    border-radius: 4px;
+    font-size: 13px;
+    padding: 2px 8px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  h3 { font-size: 15px; color: var(--navy); margin: 20px 0 8px; }
+
+  p, li { color: #1f2d44; }
+  .secundario { color: var(--gris); }
+
+  code, pre {
+    font-family: "SF Mono", Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #f5f8fb;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid var(--cyan);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    color: var(--navy);
+  }
+  code { background: #eef4f9; padding: 1px 5px; border-radius: 4px; }
+  pre code { background: none; padding: 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--navy);
+    color: var(--blanco);
+    text-align: left;
+    padding: 9px 12px;
+  }
+  td { border-bottom: 1px solid #e2e8f0; padding: 8px 12px; }
+  .ok { color: #16a34a; font-weight: 600; }
+
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: var(--gris);
+    display: flex;
+    justify-content: space-between;
+  }
+  @media print {
+    .pagina { padding: 0; max-width: none; }
+    pre { white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <header class="marca">
+    <img src="./assets/Hidrotecnica.jpg" alt="HidroTecnica">
+    <div class="doc-id">
+      <div><strong>HT-AP-03</strong> · v1.0</div>
+      <div>2026-06-14</div>
+    </div>
+  </header>
+
+  <h1>Pruebas Automatizadas — Control de EPP</h1>
+  <p class="subtitulo">Aplicación: control-epp-ht-production.up.railway.app · Documento relacionado: HT-AP-02</p>
+
+  <h2><span class="num">1</span>Propósito</h2>
+  <p>Describir la infraestructura de pruebas automatizadas de la aplicación: qué se
+  verifica, cómo ejecutarla y cómo mantenerla al agregar nuevas funcionalidades.</p>
+  <p>El objetivo es evitar regresiones, en particular los desajustes entre la forma
+  de datos que entrega el backend y la que espera el frontend, que fueron la causa
+  de los crashes corregidos en esta fase.</p>
+
+  <h2><span class="num">2</span>Alcance</h2>
+
+  <h3>2.1 Qué se prueba</h3>
+  <p><strong>Backend — pruebas de integración (12 casos).</strong> Levantan el
+  servidor Express contra una base de datos SQLite temporal y verifican la forma de
+  respuesta de cada endpoint contra lo que el frontend consume:</p>
+  <ul>
+    <li>Autenticación (login de administrador).</li>
+    <li><code>GET /users</code>, <code>GET /epp</code>, <code>GET /stock</code> (incluye alias <code>epp_id</code>/<code>epp_nombre</code>).</li>
+    <li>Creación de EPP e ingreso de stock.</li>
+    <li>Entrega directa (<code>POST /entregas/directa</code>) sin solicitud previa.</li>
+    <li>Movimientos de stock (<code>{epp, movimientos}</code> con <code>usuario_nombre</code>).</li>
+    <li>Asignaciones por trabajador (<code>asignaciones</code> + <code>historial_entregas</code>).</li>
+    <li>Matriz de asignaciones (devuelta como <strong>array</strong>).</li>
+    <li>Reportes: stock crítico (<code>{total, items}</code>) y vencimientos.</li>
+    <li>Solicitud completa: crear, listar pendientes con <code>items_count</code>, ver detalle con <code>stock_disponible</code>.</li>
+    <li>Eliminación de EPP: 409 si tiene registros asociados, 200 si no.</li>
+  </ul>
+  <p><strong>Frontend — pruebas de componente (22 casos, 20/20 páginas).</strong>
+  Renderizan cada página con el módulo <code>api</code> simulado (mock) y verifican
+  que rendericen correctamente y no crasheen con la forma de datos real, incluyendo
+  casos de datos vacíos.</p>
+
+  <h3>2.2 Qué NO se prueba (limitaciones conocidas)</h3>
+  <ul>
+    <li>Flujos end-to-end reales (navegador + backend + base de datos juntos).</li>
+    <li>Generación y contenido de los PDF (<code>services/pdf.js</code>).</li>
+    <li>Envío real de correos (el servicio falla en silencio sin SMTP).</li>
+    <li>Estilos visuales / layout (CSS).</li>
+    <li>Carga y almacenamiento físico de archivos en el volumen de Railway.</li>
+  </ul>
+
+  <h2><span class="num">3</span>Cómo ejecutar las pruebas</h2>
+  <h3>3.1 Backend</h3>
+  <pre><code>cd backend
+npm install      # solo la primera vez
+npm test</code></pre>
+  <p>Usa el runner nativo de Node (<code>node --test</code>), sin dependencias
+  adicionales. Cada corrida crea una base de datos temporal aislada; no toca datos
+  reales.</p>
+
+  <h3>3.2 Frontend</h3>
+  <pre><code>cd frontend
+npm install      # solo la primera vez
+npm test</code></pre>
+  <p>Usa <strong>Vitest + React Testing Library</strong> sobre un entorno jsdom.
+  Estas dependencias son de desarrollo y no afectan el despliegue en Railway.</p>
+
+  <h3>3.3 Requisitos</h3>
+  <ul>
+    <li>Node.js 18 o superior (validado en Node 22).</li>
+    <li>No requiere base de datos, SMTP ni red.</li>
+  </ul>
+
+  <h2><span class="num">4</span>Estructura de archivos</h2>
+  <pre><code>backend/
+  server.js              # exporta { app, initDb }; solo escucha si se ejecuta directo
+  test/
+    api.test.js          # 12 pruebas de integración de la API
+
+frontend/
+  vite.config.js         # bloque "test" (jsdom, setup)
+  src/test/
+    setup.js             # matchers jest-dom + limpieza entre pruebas
+    utils.jsx            # helper renderPage (Router + AuthProvider + localStorage)
+  src/pages/**/*.test.jsx # una prueba co-ubicada por cada página</code></pre>
+
+  <h2><span class="num">5</span>Cómo agregar una prueba nueva</h2>
+  <h3>5.1 Al agregar un endpoint en el backend</h3>
+  <ul>
+    <li>Abrir <code>backend/test/api.test.js</code>.</li>
+    <li>Agregar un bloque <code>test('...', async () =&gt; { ... })</code>.</li>
+    <li>Usar el helper <code>req(method, path, { body, form })</code> ya definido; el token de administrador se obtiene en <code>test.before</code>.</li>
+    <li>Afirmar la forma exacta de la respuesta (campos y tipos) que el frontend espera.</li>
+  </ul>
+  <h3>5.2 Al agregar una página en el frontend</h3>
+  <ul>
+    <li>Crear <code>NombrePagina.test.jsx</code> <strong>junto</strong> al componente (mismo directorio), para que el mock <code>vi.mock('../../api', ...)</code> coincida con el import del componente.</li>
+    <li>Simular las respuestas de <code>api</code> con <code>vi.fn()</code> / <code>mockResolvedValue</code>.</li>
+    <li>Renderizar con <code>renderPage(&lt;NombrePagina /&gt;, { user, path, route })</code> cuando la página use <code>useAuth</code> o <code>useParams</code>.</li>
+    <li>Afirmar que el dato clave aparece en pantalla (y, si corresponde, un caso con datos vacíos).</li>
+  </ul>
+  <h3>5.3 Regla de oro</h3>
+  <p>Cada vez que el frontend consuma un endpoint nuevo o modifique uno existente,
+  verificar que la forma de datos (array vs objeto, nombres de campos) coincida en
+  ambos lados y agregar/ajustar la prueba correspondiente.</p>
+
+  <h2><span class="num">6</span>Resultado actual</h2>
+  <table>
+    <thead><tr><th>Suite</th><th>Casos</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Backend</td><td>12</td><td class="ok">✓ verde</td></tr>
+      <tr><td>Frontend</td><td>22</td><td class="ok">✓ verde</td></tr>
+    </tbody>
+  </table>
+  <p class="secundario">Última verificación: 2026-06-14.</p>
+
+  <footer>
+    <span>HidroTecnica SpA — Documento interno</span>
+    <span>HT-AP-03 · v1.0</span>
+  </footer>
+
+</div>
+</body>
+</html>
