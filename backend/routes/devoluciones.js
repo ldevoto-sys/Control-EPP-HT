@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const { db } = require('../db');
 const { authenticate, authorize } = require('../middleware/auth');
 
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = process.env.RAILWAY_VOLUME_MOUNT_PATH ? require('path').join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'uploads') : require('path').join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({

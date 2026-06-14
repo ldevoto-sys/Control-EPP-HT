@@ -7,8 +7,10 @@ const { initDb } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Directorio uploads
-const uploadsDir = path.join(__dirname, 'uploads');
+// Directorio uploads — en Railway usar volumen persistente
+const uploadsDir = process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'uploads')
+  : path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // Middlewares
@@ -18,6 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Archivos estáticos de uploads
 app.use('/uploads', express.static(uploadsDir));
+
+// Health check (requerido por Railway)
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // Rutas API
 app.use('/api/auth', require('./routes/auth'));
