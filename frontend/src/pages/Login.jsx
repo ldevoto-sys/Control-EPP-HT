@@ -56,8 +56,20 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-xl shadow-md w-full max-w-sm p-8">
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center items-center gap-3 mb-4">
           <img src="/Hidrotecnica.jpg" alt="HidroTecnica" className="h-12 object-contain" />
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* brim */}
+            <rect x="4" y="28" width="36" height="5" rx="2.5" fill="#F59E0B"/>
+            {/* dome */}
+            <path d="M8 28 C8 14 36 14 36 28 Z" fill="#FBBF24"/>
+            {/* highlight */}
+            <path d="M14 20 C16 16 28 16 30 20" stroke="#FDE68A" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            {/* band */}
+            <rect x="8" y="26" width="28" height="3" rx="1" fill="#D97706"/>
+            {/* ventilation slot */}
+            <rect x="19" y="15" width="6" height="3" rx="1" fill="#D97706"/>
+          </svg>
         </div>
         <p className="text-center text-ht-cyan font-medium mb-6">Control de EPP</p>
 
