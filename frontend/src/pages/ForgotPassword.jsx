@@ -2,13 +2,22 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleEmailBlur = () => {
+    if (email && !EMAIL_RE.test(email)) setEmailError('Email inválido.');
+    else setEmailError('');
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
+    if (!EMAIL_RE.test(email)) { setEmailError('Email inválido.'); return; }
     setLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
@@ -31,9 +40,16 @@ export default function ForgotPassword() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan"
-                placeholder="usuario@hidrotecnica.cl" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => { setEmail(e.target.value); if (emailError) setEmailError(''); }}
+                onBlur={handleEmailBlur}
+                className={`w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan ${emailError ? 'border-red-400' : 'border-gray-300'}`}
+                placeholder="usuario@hidrotecnica.cl"
+              />
+              {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
             </div>
             <button type="submit" disabled={loading}
               className="w-full bg-ht-navy text-white py-2 rounded font-medium text-sm hover:bg-ht-navy/90 transition-colors disabled:opacity-60">
