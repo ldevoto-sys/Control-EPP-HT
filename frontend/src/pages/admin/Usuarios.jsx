@@ -3,6 +3,7 @@ import api from '../../api';
 
 function validarRut(rut) {
   const clean = rut.replace(/\./g, '').replace('-', '');
+  if (clean.length < 2) return false;
   const body = clean.slice(0, -1);
   const dv = clean.slice(-1).toUpperCase();
   let sum = 0, factor = 2;
@@ -13,6 +14,17 @@ function validarRut(rut) {
   const expected = 11 - (sum % 11);
   const dvCalc = expected === 11 ? '0' : expected === 10 ? 'K' : String(expected);
   return dv === dvCalc;
+}
+
+function formatRut(raw) {
+  // Strip everything except digits and K
+  const clean = raw.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (clean.length === 0) return '';
+  const body = clean.slice(0, -1);
+  const dv = clean.slice(-1);
+  // Add dots every 3 digits from right
+  const bodyFmt = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return bodyFmt + '-' + dv;
 }
 
 const ROLES = ['administrador', 'operador', 'autorizador', 'bodega', 'consulta'];
@@ -330,7 +342,7 @@ export default function Usuarios() {
                   <input
                     type="text"
                     value={form.rut}
-                    onChange={e => setForm(f => ({ ...f, rut: e.target.value }))}
+                    onChange={e => setForm(f => ({ ...f, rut: formatRut(e.target.value) }))}
                     placeholder="12.345.678-9"
                     className={`w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ht-cyan ${formErrors.rut ? 'border-red-400' : 'border-gray-300'}`}
                   />
