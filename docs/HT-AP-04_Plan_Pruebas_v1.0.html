@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HT-AP-04 — Plan de Pruebas Manuales Control de EPP</title>
+<style>
+  :root {
+    --navy: #112548;
+    --cyan: #34B3DE;
+    --gris: #555555;
+    --blanco: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--navy);
+    line-height: 1.55;
+    margin: 0;
+    background: var(--blanco);
+  }
+  .pagina {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 48px 64px;
+  }
+  header.marca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--cyan);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+  header.marca img {
+    height: 48px;
+    width: auto;
+  }
+  header.marca .doc-id {
+    text-align: right;
+    font-size: 13px;
+    color: var(--gris);
+  }
+  header.marca .doc-id strong { color: var(--navy); }
+
+  h1 {
+    font-size: 26px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .subtitulo { color: var(--cyan); font-weight: 600; margin: 0 0 28px; }
+
+  h2 {
+    font-size: 19px;
+    color: var(--navy);
+    margin: 34px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  h2 .num {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--blanco);
+    border-radius: 4px;
+    font-size: 13px;
+    padding: 2px 8px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  p, li { color: #1f2d44; }
+  .secundario { color: var(--gris); font-size: 13px; }
+
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  /* Tablas base */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0 24px;
+    font-size: 14px;
+  }
+  th {
+    background: var(--navy);
+    color: var(--blanco);
+    text-align: left;
+    padding: 9px 12px;
+  }
+  td { border-bottom: 1px solid #e2e8f0; padding: 8px 12px; vertical-align: top; }
+
+  /* Fila de encabezado de módulo dentro de tabla de casos */
+  .modulo-header td {
+    background: #f5f8fb;
+    border-left: 3px solid var(--cyan);
+    font-weight: 700;
+    color: var(--navy);
+    font-size: 14px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #d0dce8;
+  }
+
+  /* Celda OK/NOK — ancho fijo para poder escribir en impresión */
+  .col-oknok {
+    width: 72px;
+    text-align: center;
+    font-size: 18px;
+    color: #aab4c4;
+    border-left: 1px solid #e2e8f0;
+  }
+  th.col-oknok {
+    width: 72px;
+    text-align: center;
+    color: var(--blanco);
+    border-left: 1px solid #1e3a6a;
+  }
+
+  /* Columna # (número de caso) */
+  .col-num {
+    width: 40px;
+    text-align: center;
+    color: var(--gris);
+    font-size: 13px;
+  }
+  th.col-num { text-align: center; }
+
+  /* Tabla de resumen de resultado */
+  .tabla-resultado td:nth-child(2),
+  .tabla-resultado td:nth-child(3) {
+    text-align: center;
+    width: 80px;
+  }
+  .tabla-resultado th:nth-child(2),
+  .tabla-resultado th:nth-child(3) {
+    text-align: center;
+    width: 80px;
+  }
+  .tabla-resultado tr.total-row td {
+    font-weight: 700;
+    background: #f5f8fb;
+    border-top: 2px solid var(--navy);
+  }
+
+  /* Criterios de aprobación */
+  .criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .badge {
+    display: inline-block;
+    min-width: 64px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .badge-verde  { background: #dcfce7; color: #166534; }
+  .badge-amarillo { background: #fef9c3; color: #854d0e; }
+  .badge-rojo   { background: #fee2e2; color: #991b1b; }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: var(--gris);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ---- PRINT ---- */
+  @media print {
+    .pagina { padding: 0; max-width: none; }
+    body { font-size: 12px; }
+    h2 { font-size: 15px; margin-top: 22px; }
+    table { font-size: 12px; page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+    .modulo-header { page-break-before: auto; }
+    /* Give OK/NOK cells a printed border box for writing */
+    .col-oknok {
+      border: 1px solid #aab4c4 !important;
+    }
+    footer { margin-top: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <header class="marca">
+    <img src="./assets/Hidrotecnica.jpg" alt="HidroTecnica">
+    <div class="doc-id">
+      <div><strong>HT-AP-04</strong> · v1.0</div>
+      <div>2026-06-15</div>
+    </div>
+  </header>
+
+  <h1>Plan de Pruebas Manuales — Control de EPP</h1>
+  <p class="subtitulo">Documento relacionado: HT-AP-02 · HT-AP-03</p>
+
+  <!-- ================================================ -->
+  <h2><span class="num">1</span>Objetivo y alcance</h2>
+  <p>Verificar los flujos principales por rol antes de liberar la aplicación a producción,
+  mediante un protocolo de prueba manual estructurado que el equipo QA puede completar en
+  una sola sesión.</p>
+  <ul>
+    <li><strong>Tiempo estimado:</strong> 90–120 minutos en total.</li>
+    <li><strong>Prerequisito:</strong> acceso a
+      <code>control-epp-ht-production.up.railway.app</code> con usuarios de prueba
+      por rol (ver sección 2).</li>
+    <li>El administrador debe crear los usuarios de prueba antes de iniciar las pruebas
+      (Módulo A).</li>
+  </ul>
+
+  <!-- ================================================ -->
+  <h2><span class="num">2</span>Usuarios de prueba</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Rol</th>
+        <th>Email</th>
+        <th>Contraseña inicial</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Administrador</td><td>admin@hidrotecnica.cl</td><td>(definida en Railway)</td></tr>
+      <tr><td>Operador</td><td>operador@hidrotecnica.cl</td><td>(idem)</td></tr>
+      <tr><td>Autorizador</td><td>autorizador@hidrotecnica.cl</td><td>(idem)</td></tr>
+      <tr><td>Bodega</td><td>bodega@hidrotecnica.cl</td><td>(idem)</td></tr>
+      <tr><td>Consulta</td><td>consulta@hidrotecnica.cl</td><td>(idem)</td></tr>
+    </tbody>
+  </table>
+  <p class="secundario">El administrador debe crear estos usuarios antes de iniciar las pruebas (Módulo A).</p>
+
+  <!-- ================================================ -->
+  <h2><span class="num">3</span>Módulos de prueba</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-num">#</th>
+        <th>Acción</th>
+        <th>Resultado esperado</th>
+        <th class="col-oknok">OK / NOK</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- MÓDULO A -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo A — Administración &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">15 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">A1</td>
+        <td>Iniciar sesión como administrador</td>
+        <td>Redirige al dashboard con resumen de stock y alertas</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A2</td>
+        <td>Crear usuario "operador@hidrotecnica.cl" con RUT válido</td>
+        <td>Usuario aparece en la lista</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A3</td>
+        <td>Intentar crear usuario con RUT inválido</td>
+        <td>Mensaje de error de validación</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A4</td>
+        <td>Intentar crear usuario con email inválido</td>
+        <td>Mensaje de error de validación</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A5</td>
+        <td>Crear usuarios para los 4 roles restantes</td>
+        <td>Todos aparecen en la lista</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A6</td>
+        <td>Filtrar/ordenar lista de usuarios</td>
+        <td>Lista se actualiza correctamente</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A7</td>
+        <td>Editar un usuario (cambiar nombre)</td>
+        <td>Cambio se refleja en la lista</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A8</td>
+        <td>Ver catálogo de EPP</td>
+        <td>Lista de EPP con stock disponible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A9</td>
+        <td>Crear un EPP nuevo (ej. "Guante térmico")</td>
+        <td>Aparece en el catálogo</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">A10</td>
+        <td>Intentar eliminar EPP con stock asociado</td>
+        <td>Mensaje de error 409</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+      <!-- MÓDULO B -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo B — Operador: Solicitud &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">15 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">B1</td>
+        <td>Iniciar sesión como operador</td>
+        <td>Dashboard de operador visible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">B2</td>
+        <td>Crear nueva solicitud con 2 ítems de EPP</td>
+        <td>Solicitud creada en estado "pendiente"</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">B3</td>
+        <td>Ver "Mis solicitudes"</td>
+        <td>Solicitud aparece con estado y número</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">B4</td>
+        <td>Intentar crear solicitud sin seleccionar EPP</td>
+        <td>Formulario no se envía (validación)</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+      <!-- MÓDULO C -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo C — Autorizador: Revisión &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">10 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">C1</td>
+        <td>Iniciar sesión como autorizador</td>
+        <td>Lista de solicitudes pendientes visible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">C2</td>
+        <td>Abrir la solicitud creada en B2</td>
+        <td>Detalle con ítems y stock disponible visible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">C3</td>
+        <td>Aprobar la solicitud</td>
+        <td>Estado cambia a "aprobada"; operador puede verlo</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">C4</td>
+        <td>Crear segunda solicitud (desde operador) y rechazarla</td>
+        <td>Estado cambia a "rechazada" con motivo</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+      <!-- MÓDULO D -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo D — Bodega: Entrega &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">20 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">D1</td>
+        <td>Iniciar sesión como bodega</td>
+        <td>Lista de entregas pendientes visible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D2</td>
+        <td>Ver solicitud aprobada (de C3) en "Pendientes de entrega"</td>
+        <td>Aparece con número e item_count</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D3</td>
+        <td>Registrar entrega de la solicitud</td>
+        <td>Entrega guardada; solicitud desaparece de pendientes</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D4</td>
+        <td>Realizar entrega directa (sin solicitud) con 1 ítem</td>
+        <td>Entrega directa registrada</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D5</td>
+        <td>Ingresar stock de un EPP (registrar ingreso)</td>
+        <td>Historial de movimientos muestra el ingreso con usuario</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D6</td>
+        <td>Ver stock general</td>
+        <td>Tabla con epp_id, epp_nombre y cantidades correctas</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">D7</td>
+        <td>Registrar una devolución de EPP</td>
+        <td>Devolución registrada; stock sube</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+      <!-- MÓDULO E -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo E — Consulta / Reportes &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">15 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">E1</td>
+        <td>Iniciar sesión como consulta</td>
+        <td>Menú de consulta visible</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E2</td>
+        <td>Buscar trabajador por nombre</td>
+        <td>Resultado con asignaciones actuales</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E3</td>
+        <td>Ver detalle de asignación</td>
+        <td>Lista de EPP asignado + historial de entregas</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E4</td>
+        <td>Ver documentación / matriz de asignaciones</td>
+        <td>Tabla con trabajadores y EPP</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E5</td>
+        <td>Iniciar sesión como admin, ir a Reportes</td>
+        <td>Dashboard sin error (no pantalla en blanco)</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E6</td>
+        <td>Verificar reporte "Stock crítico"</td>
+        <td>Muestra EPP bajo mínimo (total + items)</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E7</td>
+        <td>Verificar reporte "Vencimientos"</td>
+        <td>Muestra EPP próximos a vencer</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">E8</td>
+        <td>Descargar reporte en PDF</td>
+        <td>PDF descargado sin error</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+      <!-- MÓDULO F -->
+      <tr class="modulo-header">
+        <td colspan="4">Módulo F — Seguridad y accesos &nbsp;·&nbsp; <span style="font-weight:400;color:var(--gris)">10 min</span></td>
+      </tr>
+      <tr>
+        <td class="col-num">F1</td>
+        <td>Intentar acceder a URL de admin como operador</td>
+        <td>Redirige a /dashboard o muestra "sin acceso"</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">F2</td>
+        <td>Cerrar sesión</td>
+        <td>Redirige a login; no accede con botón Atrás</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">F3</td>
+        <td>Cambiar contraseña del usuario actual</td>
+        <td>Nuevo password funciona en el próximo login</td>
+        <td class="col-oknok">□</td>
+      </tr>
+      <tr>
+        <td class="col-num">F4</td>
+        <td>Ingresar contraseña actual incorrecta al cambiar</td>
+        <td>Mensaje de error</td>
+        <td class="col-oknok">□</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- ================================================ -->
+  <h2><span class="num">4</span>Resultado del protocolo</h2>
+
+  <table class="tabla-resultado">
+    <thead>
+      <tr>
+        <th>Módulo</th>
+        <th>Casos</th>
+        <th>Aprobados</th>
+        <th>Observaciones</th>
+        <th>Responsable</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>A — Administración</td>
+        <td>10</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>B — Operador</td>
+        <td>4</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>C — Autorizador</td>
+        <td>4</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>D — Bodega</td>
+        <td>7</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>E — Consulta / Reportes</td>
+        <td>8</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>F — Seguridad</td>
+        <td>4</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class="total-row">
+        <td>Total</td>
+        <td>37</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ================================================ -->
+  <h2><span class="num">5</span>Criterio de aprobación</h2>
+
+  <div class="criterio">
+    <span class="badge badge-verde">Verde</span>
+    <span>37/37 casos aprobados → apto para producción.</span>
+  </div>
+  <div class="criterio">
+    <span class="badge badge-amarillo">Amarillo</span>
+    <span>Hasta 3 NOK menores que no bloquean flujos críticos → liberar con observaciones registradas.</span>
+  </div>
+  <div class="criterio">
+    <span class="badge badge-rojo">Rojo</span>
+    <span>Cualquier NOK en módulos B, C o D (flujo principal de solicitud y entrega) → no liberar.</span>
+  </div>
+
+  <footer>
+    <span>HidroTecnica SpA — Documento interno</span>
+    <span>HT-AP-04 · v1.0</span>
+  </footer>
+
+</div>
+</body>
+</html>
